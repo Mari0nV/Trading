@@ -348,3 +348,11 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+.vscode
+
+API_KEY.txt
+API_SECRET.txt
+
+trading.egg-info/
+test_data.json
