@@ -1,4 +1,4 @@
-from trading.indicators.avg import (
+from trading.indicators.indicators import (
     macd,
     mma,
     mme

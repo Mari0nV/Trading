@@ -25,7 +25,6 @@ def mme(df, nb, c_input="high", alpha=None, c_output=None):
     column_output = f'MME{nb}-{round(alpha, 2)}' if not c_output else c_output
     df[column_output] = [None for _ in range(len(df))]
 
-    # computing MME
     if len(df) >= nb:
         for index in range(0, len(df) - nb + 1):
             if alpha != 0:
