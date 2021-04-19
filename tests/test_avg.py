@@ -1,4 +1,5 @@
 from trading.indicators.avg import (
+    macd,
     mma,
     mme
 )
@@ -6,6 +7,7 @@ from trading.indicators.avg import (
 import pandas as pd
 import math
 import pytest
+import random
 
 @pytest.mark.parametrize("nb, values, mma_column", [
     (1, [0.2], [0.2]),
@@ -32,9 +34,26 @@ def test_that_mma_is_computed(nb, values, mma_column):
 ])
 def test_that_mme_is_computed(nb, alpha, values, mme_column):
     df = pd.DataFrame(values, columns=["high"])
-    df = mme(df, nb, alpha)
+    df = mme(df, nb, alpha=alpha)
     for i in range(len(mme_column)):
         if not mme_column[i]:
             assert not df[f"MME{nb}-{alpha}"][i]
         else:
             assert math.isclose(mme_column[i], df[f"MME{nb}-{alpha}"][i])
+
+
+def test_that_macd_is_computed():
+    values = [random.uniform(0, 1) for _ in range(100)]
+    df = pd.DataFrame(values, columns=["high"])
+    df = macd(df)
+    
+    assert set(df.columns) == set([
+        'high', 'MME12-0.15', 'MME26-0.07', 'MACD(12,26)', 'MACD_signal(12,26)',
+        'MACD_histo(12,26)'
+        ])
+    assert df[:26]['MACD(12,26)'].isnull().sum() == 25
+    assert df[:34]['MACD_signal(12,26)'].isnull().sum() == 33
+    assert df[:34]['MACD_histo(12,26)'].isnull().sum() == 33
+    assert df[26:]['MACD(12,26)'].isnull().sum() == 0
+    assert df[34:]['MACD_signal(12,26)'].isnull().sum() == 0
+    assert df[34:]['MACD_histo(12,26)'].isnull().sum() == 0
