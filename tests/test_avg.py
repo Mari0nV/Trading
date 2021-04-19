@@ -15,12 +15,22 @@ import random
     (2, [0.2, 0.3, 0.4], [None, 0.25, 0.35]),
     (3, [0.2, 0.3, 0.4], [None, None, 0.3]),
     (4, [0.2, 0.3, 0.4], [None, None, None]),
+    (20, [
+        90.70, 92.90, 92.98, 91.80, 92.66, 92.68, 92.30, 92.77, 92.54, 92.95, 93.20,
+        91.07, 89.83, 89.74, 90.40, 90.74, 88.02, 88.09, 88.84, 90.78, 90.54, 91.39, 90.65
+        ], [
+            None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+            None, None, None, None, None, 91.25, 91.24, 91.17, 91.05
+        ])
 ])
 def test_that_mma_is_computed(nb, values, mma_column):
     df = pd.DataFrame(values, columns=["high"])
     df = mma(df, nb)
-    assert list(df[f"MMA{nb}"]) == mma_column
-
+    for i in range(len(mma_column)):
+        if not mma_column[i]:
+            assert not df[f"MMA{nb}"][i]
+        else:
+            assert round(df[f"MMA{nb}"][i], 2) == mma_column[i]
 
 @pytest.mark.parametrize("nb, alpha, values, mme_column", [
     (1, 0.5, [0.2], [0.2]),
