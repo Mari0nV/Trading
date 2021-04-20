@@ -65,3 +65,24 @@ def macd(df, mme_short=12, mme_long=26, signal=9):
     df[column_histo] = df[column_macd] - df[column_signal]
 
     return df
+
+
+def bollinger(df, nb=20, c_input="high", c_output=None):
+    column_mma = f"MMA{nb}"
+    if column_mma not in df:
+        df = mma(df, nb, c_input=c_input)
+    
+    c_bollinger_lower = f"Bollinger{nb}_lower"
+    c_bollinger_upper = f"Bollinger{nb}_upper"
+
+    if len(df) >= nb:
+        for index in range(0, len(df) - nb + 1):
+            deviation_squared = [(df[c_input][index + i] - df[column_mma][nb + index - 1])**2 for i in range(0, nb)]
+            mean_dev = sum(deviation_squared) / nb
+            standard_dev = math.sqrt(mean_dev)
+            bollinger_down = df[column_mma][nb + index - 1] - 2 * standard_dev
+            bollinger_up = df[column_mma][nb + index - 1] + 2 * standard_dev
+            df.loc[nb + index - 1, c_bollinger_lower] = bollinger_down
+            df.loc[nb + index - 1, c_bollinger_upper] = bollinger_up
+
+    return df
