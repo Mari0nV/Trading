@@ -67,7 +67,7 @@ def macd(df, mme_short=12, mme_long=26, signal=9):
     return df
 
 
-def bollinger(df, nb=20, c_input="high", c_output=None):
+def bollinger(df, nb=20, c_input="high"):
     column_mma = f"MMA{nb}"
     if column_mma not in df:
         df = mma(df, nb, c_input=c_input)
@@ -85,4 +85,22 @@ def bollinger(df, nb=20, c_input="high", c_output=None):
             df.loc[nb + index - 1, c_bollinger_lower] = bollinger_down
             df.loc[nb + index - 1, c_bollinger_upper] = bollinger_up
 
+    return df
+
+
+def stochastic(df, nb=14, nb_signal=3):
+    column_sto = f"Stochastic{nb}"
+    column_signal = f"Stochastic{nb}_Signal{nb_signal}"
+
+    if len(df) >= nb:
+        # Stochastic
+        for index in range(0, len(df) - nb + 1):
+            lowest = min(df[index:index + nb]["low"])
+            highest = max(df[index:index + nb]["high"])
+            sto = (df["close"][index + nb - 1] - lowest)/(highest - lowest) * 100
+            df.loc[index + nb - 1, column_sto] = sto
+        
+        # Stochastic signal
+        df = mma(df, 3, c_input=column_sto, c_output=column_signal)
+    
     return df

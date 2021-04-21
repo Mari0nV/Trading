@@ -2,7 +2,8 @@ from trading.indicators.indicators import (
     bollinger,
     macd,
     mma,
-    mme
+    mme,
+    stochastic
 )
 
 import pandas as pd
@@ -92,3 +93,28 @@ def test_that_bollinger_is_computed():
         else:
             assert math.isclose(upper_band[i], df["Bollinger20_upper"][i], rel_tol=0.0001)
             assert math.isclose(lower_band[i], df["Bollinger20_lower"][i], rel_tol=0.0001)
+
+
+def test_that_stochastic_is_computed():
+    values = [
+        (127.01, 125.36, None), (127.62, 126.16, None), (126.59, 124.93, None), (127.35, 126.09, None), (128.17, 126.82, None),
+        (128.43, 126.48, None), (127.37, 126.03, None), (126.42, 124.83, None), (126.90, 126.39, None), (126.85, 125.72, None),
+        (125.65, 124.56, None), (125.72, 124.57, None), (127.16, 125.07, None), (127.72, 126.86, 127.29), (127.69, 126.63, 127.18),
+        (128.22, 126.80, 128.01), (128.27, 126.71, 127.11), (128.09, 126.80, 127.73), (128.27, 126.13, 127.06), (127.74, 125.92, 127.33),
+        (128.77, 126.99, 128.71), (129.29, 127.81, 127.87), (130.06, 128.47, 128.58), (129.12, 128.06, 128.60), (129.29, 127.61, 127.93),
+        (128.47, 127.60, 128.11), (128.09, 127.00, 127.60), (128.65, 126.90, 127.60), (129.14, 127.49, 128.69), (128.64, 127.40, 128.27)
+    ]
+    sto = [None] * 13 + [
+        70.54, 67.70, 89.147, 65.89, 81.91, 64.599, 74.66, 98.57, 69.979, 73.09, 73.45, 61.20, 60.92, 40.58, 40.58, 66.908, 56.76
+        ]
+    df = pd.DataFrame(values, columns=["high", "low", "close"])
+    df = stochastic(df)
+
+    assert set(df.columns) == set([
+        'high', 'low', 'close', 'Stochastic14', 'Stochastic14_Signal3',
+        ])
+    for i in range(len(sto)):
+        if not sto[i]:
+            assert df['Stochastic14'][i] != df['Stochastic14'][i]  # method to check for NaN values
+        else:
+            assert math.isclose(sto[i], df['Stochastic14'][i], rel_tol=0.0001)
