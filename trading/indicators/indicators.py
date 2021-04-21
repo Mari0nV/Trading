@@ -68,6 +68,10 @@ def macd(df, mme_short=12, mme_long=26, signal=9):
 
 
 def bollinger(df, nb=20, c_input="high"):
+    """ Compute Bollinger upper and lower bands.
+        Bollinger upper band is the value of the MMA20 + 2*standard deviation
+        Bollinger lower band is the value of the MMA20 - 2*standard deviation
+    """
     column_mma = f"MMA{nb}"
     if column_mma not in df:
         df = mma(df, nb, c_input=c_input)
@@ -89,6 +93,9 @@ def bollinger(df, nb=20, c_input="high"):
 
 
 def stochastic(df, nb=14, nb_signal=3):
+    """ Compute stochastic oscillator.
+    Stochastic measures the level of the close relative to the high-low range over 14 days.
+    """
     column_sto = f"Stochastic{nb}"
     column_signal = f"Stochastic{nb}_Signal{nb_signal}"
 
@@ -103,4 +110,38 @@ def stochastic(df, nb=14, nb_signal=3):
         # Stochastic signal
         df = mma(df, 3, c_input=column_sto, c_output=column_signal)
     
+    return df
+
+
+def rsi(df, nb=14):
+    """ Compute RSI (Relative Strength Index). RSI measures the speed and change of price movements.
+        RSI = 100 - (100 / (1 + RS)) where RS = average gain / average loss over 14 days.
+    """
+    column_rsi = f"RSI{nb}"
+    avg_gain = None
+    avg_loss = None
+    if len(df) >= nb:
+        for index in range(1, len(df) - nb + 1):
+            if not avg_gain:
+                gain = [
+                    df["close"][index + i] - df["close"][index + i - 1] 
+                        for i in range(0, nb) if df["close"][index + i] - df["close"][index + i - 1] > 0
+                ]
+                loss = [
+                    -(df["close"][index + i] - df["close"][index + i - 1])
+                        for i in range(0, nb) if df["close"][index+i] - df["close"][index + i - 1] < 0
+                ]
+                avg_gain = sum(gain) / nb
+                avg_loss = sum(loss) / nb
+            else:
+                current_gain = df["close"][index + nb - 1] - df["close"][index + nb - 2] \
+                    if df["close"][index + nb - 1] - df["close"][index + nb - 2] > 0 else 0
+                current_loss = -(df["close"][index + nb - 1] - df["close"][index + nb - 2]) \
+                    if df["close"][index + nb - 1] - df["close"][index + nb - 2] < 0 else 0
+                avg_gain = (avg_gain * (nb - 1) + current_gain) / 14
+                avg_loss = (avg_loss * (nb - 1) + current_loss) / 14
+            rs = avg_gain / avg_loss
+            rsi = 100 - (100 / (1 + rs))
+            df.loc[index + nb - 1, column_rsi] = rsi
+
     return df

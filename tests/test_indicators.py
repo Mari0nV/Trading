@@ -3,6 +3,7 @@ from trading.indicators.indicators import (
     macd,
     mma,
     mme,
+    rsi,
     stochastic
 )
 
@@ -118,3 +119,23 @@ def test_that_stochastic_is_computed():
             assert df['Stochastic14'][i] != df['Stochastic14'][i]  # method to check for NaN values
         else:
             assert math.isclose(sto[i], df['Stochastic14'][i], rel_tol=0.0001)
+
+
+def test_that_rsi_is_computed():
+    close = [
+        44.3489, 44.0902, 44.1497, 43.6124, 44.3278, 44.8264, 45.0955, 45.4245, 45.8433, 46.0826, 45.8931, 46.0328, 45.614,
+        46.282, 46.282, 46.0028, 46.0328, 46.4116, 46.2222, 45.6439, 46.2122, 46.2521, 45.7137, 46.4515, 45.7835, 45.3548,
+        44.0288, 44.1783, 44.2181, 44.5672, 43.4205, 42.6628, 43.1314
+    ]
+    rsi_result = [None] * 14 + [
+        70.384, 66.187, 66.419, 69.281, 66.24, 57.887, 62.846, 63.173, 55.993, 62.315, 54.659, 50.382, 39.964,
+        41.434, 41.842, 45.436, 37.286, 33.065, 37.758
+    ]
+    df = pd.DataFrame(close, columns=["close"])
+    df = rsi(df)
+
+    for i in range(len(rsi_result)):
+        if not rsi_result[i]:
+            assert df['RSI14'][i] != df['RSI14'][i]  # method to check for NaN values
+        else:
+            assert math.isclose(rsi_result[i], df['RSI14'][i], rel_tol=0.0001)
