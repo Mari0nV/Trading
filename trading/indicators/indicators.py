@@ -145,3 +145,64 @@ def rsi(df, nb=14):
             df.loc[index + nb - 1, column_rsi] = rsi
 
     return df
+
+
+def directional_movement(df, nb=14):
+    """ Compute ADX, +DI and -DI.
+    ADX = Average Directional Index (measures the strength of the trend), 
+    +DI = Plus directional Indicator, -DI = Minus Directional Indicator
+    (measure the trend direction)
+    """
+    column_adx = f"ADX{nb}"
+    column_diplus = f"DI+{nb}"
+    column_diminus = f"DI-{nb}"
+
+    if len(df) >= nb:
+        true_ranges = [df["high"][0] - df["low"][0]]
+        dms_plus = [0]
+        dms_minus = [0]
+        for current in range(1, len(df)):
+            # True range
+            true_ranges.append(max(
+                df["high"][current] - df["low"][current],
+                abs(df["high"][current] - df["close"][current - 1]),
+                abs(df["low"][current] - df["close"][current - 1])
+            ))
+
+            # DM+ and DM-
+            if (df["high"][current] - df["high"][current - 1]) > (df["low"][current - 1] - df["low"][current]):
+                dms_plus.append(max(df["high"][current] - df["high"][current - 1], 0))
+                dms_minus.append(0)
+            else:
+                dms_plus.append(0)
+                dms_minus.append(max(df["low"][current - 1] - df["low"][current], 0))
+
+        average_true_range = None
+        adx = None
+        dxs = []
+        for index in range(1, len(df) - nb + 1):
+            current = index + nb - 1
+            if not average_true_range:
+                average_true_range = sum(true_ranges[:nb]) / nb
+                tr_nb = sum(true_ranges[1:nb+1])
+                dm_plus_nb = sum(dms_plus[1:nb+1])
+                dm_minus_nb = sum(dms_minus[1:nb+1])
+            else:
+                average_true_range = (average_true_range * (nb - 1) + true_ranges[current]) / nb
+                tr_nb = tr_nb - tr_nb/nb + true_ranges[current]
+                dm_plus_nb = dm_plus_nb - dm_plus_nb/nb + dms_plus[current]
+                dm_minus_nb = dm_minus_nb - dm_minus_nb/nb + dms_minus[current]
+            di_plus = dm_plus_nb / tr_nb * 100
+            di_minus = dm_minus_nb / tr_nb * 100
+            current_dx = abs(di_plus - di_minus) / (di_plus + di_minus) * 100
+            dxs.append(current_dx)
+            if current >= nb * 2 - 1:
+                if not adx:
+                    adx = sum(dxs[:nb]) / nb
+                else:
+                    adx = ((adx * 13) + current_dx) / nb
+                df.loc[current, column_adx] = adx
+            df.loc[current, column_diplus] = di_plus
+            df.loc[current, column_diminus] = di_minus
+
+    return df

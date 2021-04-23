@@ -1,5 +1,6 @@
 from trading.indicators.indicators import (
     bollinger,
+    directional_movement,
     macd,
     mma,
     mme,
@@ -7,6 +8,7 @@ from trading.indicators.indicators import (
     stochastic
 )
 
+import json
 import pandas as pd
 import math
 import pytest
@@ -139,3 +141,31 @@ def test_that_rsi_is_computed():
             assert df['RSI14'][i] != df['RSI14'][i]  # method to check for NaN values
         else:
             assert math.isclose(rsi_result[i], df['RSI14'][i], rel_tol=0.0001)
+
+
+def test_directional_movement():
+    with open("data_adx.json", "r") as fd:
+        data = json.load(fd)["data"]
+    
+    values = [(data["low"][i], data["high"][i], data["close"][i]) for i in range(len(data["high"]))]
+    df = pd.DataFrame(values, columns=["low", "high", "close"])
+    df = directional_movement(df)
+
+    for i in range(len(data["high"])):
+        # Checking DI+ values
+        if not data["di_plus"][i]:
+            assert df['DI+14'][i] != df['DI+14'][i]  # method to check for NaN values
+        else:
+            assert math.isclose(data["di_plus"][i], df['DI+14'][i])
+
+        # Checking DI- values
+        if not data["di_minus"][i]:
+            assert df['DI-14'][i] != df['DI-14'][i]  # method to check for NaN values
+        else:
+            assert math.isclose(data["di_minus"][i], df['DI-14'][i])
+        
+        # Checking ADX values
+        if not data["adx"][i]:
+            assert df['ADX14'][i] != df['ADX14'][i]  # method to check for NaN values
+        else:
+            assert math.isclose(data["adx"][i], df['ADX14'][i])
