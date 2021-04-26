@@ -4,6 +4,7 @@ from trading.indicators.indicators import (
     macd,
     mma,
     mme,
+    parabolic_sar,
     rsi,
     stochastic
 )
@@ -169,3 +170,34 @@ def test_directional_movement():
             assert df['ADX14'][i] != df['ADX14'][i]  # method to check for NaN values
         else:
             assert math.isclose(data["adx"][i], df['ADX14'][i])
+
+
+@pytest.mark.parametrize("values, sar", [
+    ([
+        (47.95, 47.32), (48.11, 47.25), (48.30, 47.77), (48.17, 47.91), (48.60, 47.90), (48.33, 47.74),  # rising trend
+        (48.40, 48.10), (48.55, 48.06), (48.45, 48.07), (48.70, 47.79), (48.72, 48.14), (48.90, 48.39),
+        (48.87, 48.37), (48.82, 48.24), (49.05, 48.64), (49.20, 48.94), (49.35, 48.86)
+    ], [
+        None, None, 47.25, 47.25, 47.27, 47.32, 47.38, 47.42, 47.47, 47.52, 47.59, 47.68, 47.80, 47.91,
+        48.01, 48.13, 48.28
+    ]),
+    ([
+        (46.60, 45.60), (46.59, 45.90), (46.55, 45.38), (46.30, 45.25), (45.43, 43.99), (44.55, 44.07),  # falling trend
+        (44.84, 44.00), (44.80, 43.96), (44.38, 43.27), (43.97, 42.58), (43.23, 42.83), (43.73, 42.98),
+        (43.92, 43.37), (43.61, 42.57), (42.97, 42.07), (43.13, 42.59), (43.46, 42.71)
+    ], [
+        None, None, 46.59, 46.59, 46.55, 46.40, 46.26, 46.12, 45.95, 45.68, 45.31, 44.98, 44.69, 44.44,
+        44.18, 43.84, 43.56
+    ]
+
+    )
+])
+def test_parabolic_sar(values, sar):
+    df = pd.DataFrame(values, columns=["high", "low"])
+    df = parabolic_sar(df)
+
+    for i in range(len(sar)):
+        if not sar[i]:
+            assert df["Parabolic_SAR"][i] != df["Parabolic_SAR"][i]  # method to check for NaN values
+        else:
+            assert math.isclose(sar[i], df["Parabolic_SAR"][i], rel_tol=0.001)

@@ -206,3 +206,49 @@ def directional_movement(df, nb=14):
             df.loc[current, column_diminus] = di_minus
 
     return df
+
+
+def parabolic_sar(df, starting_af=0.02, maximum=0.2):
+    """ Compute Parabolic SAR.
+    SAR = previous_SAR + previous_af(previous_EP - previous_SAR) for rising trend
+    SAR = previous_SAR - previous_af(previous_SAR - previous_EP) for falling trend
+    af stands for Acceleration Factor, and EP for Extreme Point.
+    """
+    column_sar = "Parabolic_SAR"
+
+    if len(df) > 2:
+        if df['high'][1] > df["high"][0]:
+            sar = df['low'][1]
+            rising = True
+            previous_ep = df['high'][2]
+        else:
+            sar = df['high'][1]
+            rising = False
+            previous_ep = df['low'][2]
+        af = starting_af
+        for index in range(2, len(df)):
+            if sar < df['high'][index]:
+                # rising trend
+                if not rising:
+                # starting rising trend
+                    rising = True
+                    af = starting_af
+                sar = min(sar + af * (previous_ep - sar), min(df['low'][index - 1], df['low'][index - 2]))
+                ep = df['high'][index]
+                if ep > previous_ep and af < maximum:
+                    af = min(af + starting_af, maximum)
+                    previous_ep = ep
+            else:
+                # falling trend
+                if rising:
+                    # starting falling trend 
+                    rising = False
+                    af = starting_af
+                sar = max(sar - af * (sar - previous_ep), max(df['high'][index - 1], df['high'][index - 2]))
+                ep = df['low'][index]
+                if ep < previous_ep and af < maximum:
+                    af = min(af + starting_af, maximum)
+                    previous_ep = ep
+            df.loc[index, column_sar] = sar
+        
+        return df
