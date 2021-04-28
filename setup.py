@@ -11,5 +11,7 @@ setup(
         "python-binance==0.7.10",
         "numpy==1.20.2",
         "pandas==1.2.4",
+        "pytest",
+        "PyQt5==5.15.4"
     ],
 )
