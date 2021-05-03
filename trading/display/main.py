@@ -15,13 +15,21 @@ from PyQt5.QtWidgets import (
     QLabel
 )
 from trading.display.menu import Menu, IndicatorsToolBar
-import trading.ext.finplot as fplt
+import finplot as fplt
 import pyqtgraph as pg
 
 from trading.get_data import get_candle_data
+from trading.display.plot import (
+    create_fplt_widgets,
+    plot_main_window,
+    set_plot_colors
+)
 
 
 currencies = ["ETHEUR", "BTCUSDT"]
+begin = "2021-03-01 00:00:00"
+end = "now"
+granularity = "1d"
 
 
 # Creating the main window
@@ -58,18 +66,29 @@ class TabsWidget(QTabWidget):
         tab = QWidget()
         tab.layout = QVBoxLayout(self)
         tab.label = QLabel(currency)
-        tab.fplt_widget = pg.PlotWidget(
-            plotItem=fplt.create_plot_widget(self.window())
-        )
-        self.candles.setdefault(currency, {"candles": get_candle_data(currency)})
-        fplt.candlestick_ochl(self.candles[currency]["candles"])
+        fplt_widgets = create_fplt_widgets(self.window(), rows=2)
+        self.candles.setdefault(
+            currency, {
+                "candles": get_candle_data( 
+                    currency,
+                    begin=begin,
+                    end=end,
+                    granularity=granularity
+                    )
+                }
+            )
         tab.layout.addWidget(tab.label)
-        tab.layout.addWidget(tab.fplt_widget)  #.ax_widget)
-        self.window().axs = [tab.fplt_widget.getPlotItem()]  # required property of window
-        self.candles[currency]["ax"] = self.window().axs[0]
+        tab.layout.addWidget(fplt_widgets[0].ax_widget)
+        self.window().axs = fplt_widgets
+        self.candles[currency]["axs"] = self.window().axs
+        plot_main_window(self.candles[currency])
         tab.setLayout(tab.layout)
         self.addTab(tab, currency)
-        self.ind_toolbar.set_graph_infos(currency, self.candles[currency])
+        self.ind_toolbar.set_graph_infos(
+            currency=currency,
+            candles=self.candles[currency],
+            widget=tab
+        )
         
         # add other tabs
         for currency in currencies[1:]:
@@ -86,21 +105,32 @@ class TabsWidget(QTabWidget):
         currency = self.currentWidget().label.text()
         print("currency: ", currency)
         if currency not in self.candles:
-            self.candles.setdefault(currency, {"candles": get_candle_data(currency)})
-            self.currentWidget().fplt_widget = pg.PlotWidget(
-                plotItem=fplt.create_plot_widget(self.window())
-            )
+            self.candles.setdefault(
+                currency, {
+                    "candles": get_candle_data(
+                        currency,
+                        begin=begin,
+                        end=end,
+                        granularity=granularity
+                        )
+                    }
+                )
+            fplt_widgets = create_fplt_widgets(self.window(), rows=2)
             self.currentWidget().layout.addWidget(self.currentWidget().label)
-            self.currentWidget().layout.addWidget(self.currentWidget().fplt_widget)  #.ax_widget)
-            self.window().axs = [self.currentWidget().fplt_widget.getPlotItem()]  # required property of window
-            self.candles[currency]["ax"] = self.window().axs[0]
-            fplt.candlestick_ochl(self.candles[currency]["candles"])
+            self.currentWidget().layout.addWidget(fplt_widgets[0].ax_widget)  #.ax_widget)
+            self.window().axs = fplt_widgets
+            self.candles[currency]["axs"] = self.window().axs
+            plot_main_window(self.candles[currency])
             self.currentWidget().setLayout(self.currentWidget().layout)
-            fplt.show(qt_exec=False)
-        self.ind_toolbar.set_graph_infos(currency, self.candles[currency])
+        self.ind_toolbar.set_graph_infos(
+            currency=currency,
+            candles=self.candles[currency],
+            widget=self.currentWidget()
+        )
 
 
 if __name__ == '__main__':
+    set_plot_colors()
     app = QApplication(sys.argv)
     ex = App()
     sys.exit(app.exec_())
