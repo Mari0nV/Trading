@@ -78,7 +78,7 @@ class TabsWidget(QTabWidget):
                 }
             )
         tab.layout.addWidget(tab.label)
-        tab.layout.addWidget(fplt_widgets[0].ax_widget)
+        tab.layout.addWidget(fplt_widgets[0].ax_widget, stretch=3)
         self.window().axs = fplt_widgets
         self.candles[currency]["axs"] = self.window().axs
         plot_main_window(self.candles[currency])
@@ -117,7 +117,7 @@ class TabsWidget(QTabWidget):
                 )
             fplt_widgets = create_fplt_widgets(self.window())
             self.currentWidget().layout.addWidget(self.currentWidget().label)
-            self.currentWidget().layout.addWidget(fplt_widgets[0].ax_widget)  #.ax_widget)
+            self.currentWidget().layout.addWidget(fplt_widgets[0].ax_widget, stretch=3)
             self.window().axs = fplt_widgets
             self.candles[currency]["axs"] = self.window().axs
             plot_main_window(self.candles[currency])

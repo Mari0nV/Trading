@@ -13,6 +13,7 @@ from PyQt5.QtGui import (
 from PyQt5.QtCore import Qt
 
 from trading.indicators.indicators import (
+    directional_movement,
     mma,
     parabolic_sar,
     rsi
@@ -54,6 +55,7 @@ class IndicatorsToolBar(QToolBar):
         self.addSeparator()
         self.indicator_widget("ParabolicSar", self.show_parabolic)
         self.indicator_widget("RSI", self.show_rsi)
+        self.indicator_widget("ADX", self.show_adx)
 
     def indicator_widget(self, label_text, show_method, changed_method=None):
         if changed_method:
@@ -95,13 +97,23 @@ class IndicatorsToolBar(QToolBar):
 
     def show_mma(self):
         df = mma(self.candles, self.numbers["MMA"])
-        fplt.plot(df["time"], df[f"MMA{self.numbers['MMA']}"], ax=self.axs[0], legend=f"mma{self.numbers['MMA']}")
+        fplt.plot(df["time"], df[f"MMA{self.numbers['MMA']}"], ax=self.axs[0], legend=f"MMA{self.numbers['MMA']}")
         fplt.show(qt_exec=False)
 
     def show_rsi(self):
         df = rsi(self.candles)
-        self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget) 
-        fplt.plot(df["time"], df["RSI14"], ax=self.axs[self.ax_index], legend=f"rsi14")
+        self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget, stretch=1) 
+        fplt.plot(df["time"], df["RSI14"], ax=self.axs[self.ax_index], legend=f"RSI")
+        # fplt.set_y_range(-1.4, +3.7, ax=self.axs[1])
+        fplt.show(qt_exec=False)
+        self.ax_index += 1
+    
+    def show_adx(self):
+        df = directional_movement(self.candles)
+        self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget, stretch=1)
+        fplt.plot(df["time"], df["ADX14"], ax=self.axs[self.ax_index], color="#304aea", legend=f"ADX")
+        fplt.plot(df["time"], df["DI+14"], ax=self.axs[self.ax_index], color="#26A69A", legend=f"DI+")
+        fplt.plot(df["time"], df["DI-14"], ax=self.axs[self.ax_index], color="#EF5350", legend=f"DI-")
         # fplt.set_y_range(-1.4, +3.7, ax=self.axs[1])
         fplt.show(qt_exec=False)
         self.ax_index += 1
