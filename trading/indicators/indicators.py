@@ -13,6 +13,7 @@ def mma(df, nb, c_input="high", c_output=None):
             mean = sum(df[index:index + nb][c_input]) / nb
             df.loc[nb + index - 1, column_mma] = mean
 
+    df = df.astype(np.float64)
     return df
 
 
@@ -33,6 +34,7 @@ def mme(df, nb, c_input="high", alpha=None, c_output=None):
                 mean = sum(df[index:index + nb][c_input]) / nb
             df.loc[nb + index - 1, column_output] = mean
 
+    df = df.astype(np.float64)
     return df
 
 
@@ -64,6 +66,7 @@ def macd(df, mme_short=12, mme_long=26, signal=9):
     column_histo = f"MACD_histo({mme_short},{mme_long})"
     df[column_histo] = df[column_macd] - df[column_signal]
 
+    df = df.astype(np.float64)
     return df
 
 
@@ -89,6 +92,7 @@ def bollinger(df, nb=20, c_input="high"):
             df.loc[nb + index - 1, c_bollinger_lower] = bollinger_down
             df.loc[nb + index - 1, c_bollinger_upper] = bollinger_up
 
+    df = df.astype(np.float64)
     return df
 
 
@@ -110,6 +114,7 @@ def stochastic(df, nb=14, nb_signal=3):
         # Stochastic signal
         df = mma(df, 3, c_input=column_sto, c_output=column_signal)
     
+    df = df.astype(np.float64)
     return df
 
 
@@ -144,6 +149,7 @@ def rsi(df, nb=14):
             rsi = 100 - (100 / (1 + rs))
             df.loc[index + nb - 1, column_rsi] = rsi
 
+    df = df.astype(np.float64)
     return df
 
 
@@ -205,6 +211,7 @@ def directional_movement(df, nb=14):
             df.loc[current, column_diplus] = di_plus
             df.loc[current, column_diminus] = di_minus
 
+    df = df.astype(np.float64)
     return df
 
 
@@ -250,5 +257,6 @@ def parabolic_sar(df, starting_af=0.02, maximum=0.2):
                     af = min(af + starting_af, maximum)
                     previous_ep = ep
             df.loc[index, column_sar] = sar
-        
-        return df
+    
+    df = df.astype(np.float64)
+    return df

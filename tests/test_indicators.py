@@ -34,7 +34,7 @@ def test_that_mma_is_computed(nb, values, mma_column):
     df = mma(df, nb)
     for i in range(len(mma_column)):
         if not mma_column[i]:
-            assert not df[f"MMA{nb}"][i]
+            assert df[f"MMA{nb}"][i] != df[f"MMA{nb}"][i]
         else:
             assert round(df[f"MMA{nb}"][i], 2) == mma_column[i]
 
@@ -53,7 +53,7 @@ def test_that_mme_is_computed(nb, alpha, values, mme_column):
     df = mme(df, nb, alpha=alpha)
     for i in range(len(mme_column)):
         if not mme_column[i]:
-            assert not df[f"MME{nb}-{alpha}"][i]
+            assert df[f"MME{nb}-{alpha}"][i] != df[f"MME{nb}-{alpha}"][i]
         else:
             assert math.isclose(mme_column[i], df[f"MME{nb}-{alpha}"][i])
 
