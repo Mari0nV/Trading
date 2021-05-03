@@ -66,7 +66,7 @@ class TabsWidget(QTabWidget):
         tab = QWidget()
         tab.layout = QVBoxLayout(self)
         tab.label = QLabel(currency)
-        fplt_widgets = create_fplt_widgets(self.window(), rows=2)
+        fplt_widgets = create_fplt_widgets(self.window())
         self.candles.setdefault(
             currency, {
                 "candles": get_candle_data( 
@@ -115,7 +115,7 @@ class TabsWidget(QTabWidget):
                         )
                     }
                 )
-            fplt_widgets = create_fplt_widgets(self.window(), rows=2)
+            fplt_widgets = create_fplt_widgets(self.window())
             self.currentWidget().layout.addWidget(self.currentWidget().label)
             self.currentWidget().layout.addWidget(fplt_widgets[0].ax_widget)  #.ax_widget)
             self.window().axs = fplt_widgets
