@@ -12,6 +12,7 @@ setup(
         "numpy==1.20.2",
         "pandas==1.2.4",
         "pytest",
-        "PyQt5==5.15.4"
+        "PyQt5==5.15.4",
+        "finplot==1.6"
     ],
 )
