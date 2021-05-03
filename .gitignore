@@ -356,3 +356,5 @@ API_SECRET.txt
 
 trading.egg-info/
 test_data.json
+empty_coins.json
+coins_data/
