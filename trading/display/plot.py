@@ -13,7 +13,6 @@ def set_plot_colors():
     fplt.volume_bear_color = '#813539'
     fplt.volume_bull_body_color = fplt.volume_bull_color
     fplt.cross_hair_color = '#d9d9d9'
-    fplt.band_color = '#131726'
 
 
 def create_fplt_widgets(window, rows=10):
