@@ -28,6 +28,7 @@ from trading.display.plot import (
     set_plot_colors
 )
 import trading.display.config as cfg
+from trading.display.state import State
 
 
 # Creating the main window
@@ -41,22 +42,23 @@ class App(QMainWindow):
         self.height = cfg.WINDOW_HEIGHT
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-        self.setMenuBar(Menu(self))
-        self.ind_toolbar = IndicatorsToolBar(self)
+
+        self.state = State()
+        self.setMenuBar(Menu(self, self.state))
+        self.ind_toolbar = IndicatorsToolBar(self, self.state)
         self.addToolBar(self.ind_toolbar)
 
-        self.central_widget = TabsWidget(self, self.ind_toolbar)
+        self.central_widget = TabsWidget(self, self.ind_toolbar, self.state)
         self.setCentralWidget(self.central_widget)
         fplt.autoviewrestore()
         fplt.show(qt_exec=False)
         self.show()
-        # with open("trading/display/tmp_config.json", "w") as fp:
-        #     json.dump({"config": self.central_widget.config}, fp)
 
 
 class TabsWidget(QTabWidget):
-    def __init__(self, parent, ind_toolbar):
+    def __init__(self, parent, ind_toolbar, state):
         super(QTabWidget, self).__init__(parent)
+        self.state = state
         self.layout = QVBoxLayout(self)
         self.candles = {}
         self.ind_toolbar = ind_toolbar
@@ -75,10 +77,11 @@ class TabsWidget(QTabWidget):
         # Tab "+" to add new currency at runtime
         self.create_add_tab()
 
-        self.ind_toolbar.set_graph_infos(
+        self.state.set_graph_infos(
                 currency=active_currency[0],
-                candles=self.candles[active_currency[0]],
-                widget=active_currency[1]
+                candles=self.candles[active_currency[0]]["candles"],
+                axs=self.candles[active_currency[0]]["axs"],
+                graph_widget=active_currency[1]
             )
         self.setLayout(self.layout)
         self.currentChanged.connect(self.onChange)
@@ -117,10 +120,11 @@ class TabsWidget(QTabWidget):
         if not from_tab:
             self.addTab(tab, currency)
             self.nb_tabs += 1
-        self.ind_toolbar.set_graph_infos(
+        self.state.set_graph_infos(
             currency=currency,
-            candles=self.candles[currency],
-            widget=tab
+            candles=self.candles[currency]["candles"],
+            axs=self.candles[currency]["axs"],
+            graph_widget=tab
         )
         for indicator in indicators:
             params = indicator.split("-")
@@ -134,10 +138,11 @@ class TabsWidget(QTabWidget):
         if tab_index != self.nb_tabs - 1:
             currency = self.currentWidget().label.text()
             print("currency: ", currency)
-            self.ind_toolbar.set_graph_infos(
+            self.state.set_graph_infos(
                 currency=currency,
-                candles=self.candles[currency],
-                widget=self.currentWidget()
+                candles=self.candles[currency]["candles"],
+                axs=self.candles[currency]["axs"],
+                graph_widget=self.currentWidget()
             )
         else:
             currency, ok = QInputDialog.getText(self, "currency input dialog", "Enter currency")
