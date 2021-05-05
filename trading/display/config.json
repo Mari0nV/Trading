@@ -1,0 +1,6 @@
+{
+    "config": {
+        "ETHUSDT": ["parabolic", "adx", "rsi"],
+        "BTCUSDT": ["parabolic", "adx", "rsi"]
+    }
+}

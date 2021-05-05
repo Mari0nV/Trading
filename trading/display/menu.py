@@ -25,6 +25,7 @@ from trading.get_data import get_candle_data
 
 font_size = 12
 
+
 class Menu(QMenuBar):
     def __init__(self, parent):
         super(QMenuBar, self).__init__(parent)
@@ -102,9 +103,9 @@ class IndicatorsToolBar(QToolBar):
 
     def show_rsi(self):
         df = rsi(self.candles)
-        self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget, stretch=1) 
+        self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget, stretch=1)
         fplt.plot(df["time"], df["RSI14"], ax=self.axs[self.ax_index], legend=f"RSI")
-        # fplt.set_y_range(-1.4, +3.7, ax=self.axs[1])
+        fplt.add_band(30, 70, color="#211739", ax=self.axs[self.ax_index])
         fplt.show(qt_exec=False)
         self.ax_index += 1
     
