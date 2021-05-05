@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5.QtWidgets import (
     QAction,
     QApplication,
@@ -15,7 +16,7 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QLabel
 )
-from trading.display.menu import Menu, IndicatorsToolBar
+from trading.display.menu import Menu, IndicatorsToolBar, granularity
 import finplot as fplt
 import pyqtgraph as pg
 import json
@@ -28,10 +29,8 @@ from trading.display.plot import (
 )
 
 
-currencies = ["ETHEUR", "BTCUSDT"]
 begin = "2020-03-01 00:00:00"
 end = "now"
-granularity = "1d"
 
 
 # Creating the main window
@@ -54,6 +53,8 @@ class App(QMainWindow):
         fplt.autoviewrestore()
         fplt.show(qt_exec=False)
         self.show()
+        # with open("trading/display/tmp_config.json", "w") as fp:
+        #     json.dump({"config": self.central_widget.config}, fp)
 
 
 class TabsWidget(QTabWidget):
@@ -65,11 +66,11 @@ class TabsWidget(QTabWidget):
         self.nb_tabs = 0
 
         with open("trading/display/config.json", "r") as fp:
-            config = json.load(fp)["config"]
+            self.config = json.load(fp)["config"]
 
         first = True
-        for currency, indicators in config.items():
-            tab = self.create_tab(currency, indicators)
+        for currency, indicators in self.config.items():
+            tab = self.create_or_update_tab(f"{currency}", indicators)
             if first:
                 active_currency = (currency, tab)
                 first = False
@@ -92,7 +93,7 @@ class TabsWidget(QTabWidget):
         self.addTab(tab, "+")
         self.nb_tabs += 1
 
-    def create_tab(self, currency, indicators, from_tab=None):
+    def create_or_update_tab(self, currency, indicators, from_tab=None):
         if not from_tab:
             tab = QWidget()
         else:
@@ -146,10 +147,12 @@ class TabsWidget(QTabWidget):
             if ok:
                 print(currency)
                 self.create_add_tab()
-                self.create_tab(currency, indicators=[], from_tab=self.currentWidget())
+                self.create_or_update_tab(f"{currency}", indicators=[], from_tab=self.currentWidget())
                 self.setTabText(tab_index, currency)
 
 if __name__ == '__main__':
+    if os.path.exists("trading/display/tmp_config.json"):
+        os.remove("trading/display/tmp_config.json")
     set_plot_colors()
     app = QApplication(sys.argv)
     ex = App()

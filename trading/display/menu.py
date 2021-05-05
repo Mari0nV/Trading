@@ -20,32 +20,58 @@ from trading.indicators.indicators import (
 )
 import finplot as fplt
 import pyqtgraph as pg
-
+import json
+from json import JSONDecodeError
 from trading.get_data import get_candle_data
 
 font_size = 12
-
+granularity = "1d"
 
 class Menu(QMenuBar):
     def __init__(self, parent):
         super(QMenuBar, self).__init__(parent)
         self._createActions()
-        currencyMenu = QMenu("&Currency", self)
+        currencyMenu = QMenu("&Granularity", self)
         currencyMenu.addAction(self.ethAction)
         currencyMenu.addAction(self.btcAction)
         self.addMenu(currencyMenu)
     
     def _createActions(self):
-        self.ethAction = QAction("&ETH", self)
-        self.ethAction.triggered.connect(self.show_eth)
-        self.btcAction = QAction("&BTC", self)
-        self.btcAction.triggered.connect(self.show_btc)
+        self.ethAction = QAction("&D", self)
+        self.ethAction.triggered.connect(self.daily_g)
+        self.btcAction = QAction("&4h", self)
+        self.btcAction.triggered.connect(self.fourh_g)
     
-    def show_eth(self):
-        print("ETH")
+    def daily_g(self):
+        global granularity
+        granularity = "1d"
     
-    def show_btc(self):
-        print("BTC")
+    def fourh_g(self):
+        global granularity
+        granularity = "4h"
+
+
+def save(show_func):
+    def wrapper(*args, **kwargs):
+        try:
+            ind = show_func.__name__.split('_')[1]
+            with open("trading/display/tmp_config.json", "r") as fp:
+                config = json.load(fp)["config"]
+            if args[0].currency not in config:
+                config[args[0].currency] = [ind]
+            elif ind not in config[args[0].currency]:
+                config[args[0].currency].append(ind)
+            else: 
+                return
+            with open("trading/display/tmp_config.json", "w") as fp:
+                json.dump({"config": config}, fp)
+            return show_func(*args[:1], **kwargs)
+        except (IOError, JSONDecodeError):
+            with open("trading/display/tmp_config.json", "w") as fp:
+                config = {args[0].currency: [ind]}
+                json.dump({"config": config}, fp)
+                return show_func(*args[:1], **kwargs)
+    return wrapper
 
 class IndicatorsToolBar(QToolBar):
     def __init__(self, parent):
@@ -91,16 +117,19 @@ class IndicatorsToolBar(QToolBar):
         self.numbers["MMA"] = int(text)
         print(self.numbers["MMA"])
 
+    @save
     def show_parabolic(self):
         df = parabolic_sar(self.candles)
         fplt.plot(df["time"], df["Parabolic_SAR"], ax=self.axs[0], legend=f"parabolic_sar", style="o", color="#43a7e3")
         fplt.show(qt_exec=False)
 
+    @save
     def show_mma(self):
         df = mma(self.candles, self.numbers["MMA"])
         fplt.plot(df["time"], df[f"MMA{self.numbers['MMA']}"], ax=self.axs[0], legend=f"MMA{self.numbers['MMA']}")
         fplt.show(qt_exec=False)
 
+    @save
     def show_rsi(self):
         df = rsi(self.candles)
         self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget, stretch=1)
@@ -109,6 +138,7 @@ class IndicatorsToolBar(QToolBar):
         fplt.show(qt_exec=False)
         self.ax_index += 1
     
+    @save
     def show_adx(self):
         df = directional_movement(self.candles)
         self.widget.layout.addWidget(self.axs[self.ax_index].ax_widget, stretch=1)
