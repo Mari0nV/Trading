@@ -24,9 +24,8 @@ import json
 from json import JSONDecodeError
 from trading.get_data import get_candle_data
 from trading.display.utils import save
+import trading.display.config as cfg
 
-font_size = 12
-granularity = "1d"
 
 class Menu(QMenuBar):
     def __init__(self, parent):
@@ -44,12 +43,10 @@ class Menu(QMenuBar):
         self.btcAction.triggered.connect(self.fourh_g)
     
     def daily_g(self):
-        global granularity
-        granularity = "1d"
+        cfg.GRANULARITY = "1d"
     
     def fourh_g(self):
-        global granularity
-        granularity = "4h"
+        cfg.GRANULARITY = "4h"
 
 
 class IndicatorsToolBar(QToolBar):
@@ -68,7 +65,7 @@ class IndicatorsToolBar(QToolBar):
             # Label for Indicator
             label = QLabel()
             label.setText(label_text)
-            label.setFont(QFont("Arial", font_size))
+            label.setFont(QFont(cfg.FONT, cfg.FONT_SIZE))
             self.addWidget(label)
 
             # Number widget for Indicator
@@ -76,7 +73,7 @@ class IndicatorsToolBar(QToolBar):
             number_widget = QLineEdit()
             number_widget.setValidator(QIntValidator())
             number_widget.setMaxLength(3)
-            number_widget.setFont(QFont("Arial", font_size))
+            number_widget.setFont(QFont(cfg.FONT, cfg.FONT_SIZE))
             number_widget.setMaximumWidth(55)
             number_widget.setAlignment(Qt.AlignRight)
             number_widget.setText(str(self.numbers[label_text]))
@@ -88,7 +85,7 @@ class IndicatorsToolBar(QToolBar):
 
         # MMA action
         action = QAction(action_name, self)
-        action.setFont(QFont("Arial", font_size))
+        action.setFont(QFont(cfg.FONT, cfg.FONT_SIZE))
         action.triggered.connect(show_method)
         self.addAction(action)
 

@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QLabel
 )
-from trading.display.menu import Menu, IndicatorsToolBar, granularity
+from trading.display.menu import Menu, IndicatorsToolBar
 import finplot as fplt
 import pyqtgraph as pg
 import json
@@ -27,10 +27,7 @@ from trading.display.plot import (
     plot_main_window,
     set_plot_colors
 )
-
-
-begin = "2020-03-01 00:00:00"
-end = "now"
+import trading.display.config as cfg
 
 
 # Creating the main window
@@ -40,8 +37,8 @@ class App(QMainWindow):
         self.title = 'Custom TradingView'
         self.left = 0
         self.top = 0
-        self.width = 1200
-        self.height = 800
+        self.width = cfg.WINDOW_WIDTH
+        self.height = cfg.WINDOW_HEIGHT
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setMenuBar(Menu(self))
@@ -105,9 +102,9 @@ class TabsWidget(QTabWidget):
             currency, {
                 "candles": get_candle_data( 
                     currency,
-                    begin=begin,
-                    end=end,
-                    granularity=granularity
+                    begin=cfg.START_DATE,
+                    end=cfg.END_DATE,
+                    granularity=cfg.GRANULARITY
                     )
                 }
             )
