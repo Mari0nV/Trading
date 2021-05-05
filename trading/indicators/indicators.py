@@ -224,39 +224,34 @@ def parabolic_sar(df, starting_af=0.02, maximum=0.2):
     column_sar = "Parabolic_SAR"
 
     if len(df) > 2:
-        if df['high'][1] > df["high"][0]:
-            sar = df['low'][1]
-            rising = True
-            previous_ep = df['high'][2]
-        else:
-            sar = df['high'][1]
-            rising = False
-            previous_ep = df['low'][2]
-        af = starting_af
-        for index in range(2, len(df)):
-            if sar < df['high'][index]:
-                # rising trend
-                if not rising:
-                # starting rising trend
-                    rising = True
-                    af = starting_af
-                sar = min(sar + af * (previous_ep - sar), min(df['low'][index - 1], df['low'][index - 2]))
-                ep = df['high'][index]
-                if ep > previous_ep and af < maximum:
-                    af = min(af + starting_af, maximum)
-                    previous_ep = ep
-            else:
-                # falling trend
+        rising = True
+        sar = ep_low = df['low'][0]
+        ep = ep_high = df['high'][0]
+        af = 0
+        for index in range(len(df)):
+            sar = sar + af * (ep - sar)
+            if df["high"][index] > ep_high:
+                ep_high = df["high"][index]
                 if rising:
-                    # starting falling trend 
-                    rising = False
-                    af = starting_af
-                sar = max(sar - af * (sar - previous_ep), max(df['high'][index - 1], df['high'][index - 2]))
-                ep = df['low'][index]
-                if ep < previous_ep and af < maximum:
-                    af = min(af + starting_af, maximum)
-                    previous_ep = ep
+                    ep = ep_high
+                    af = min(maximum, af + starting_af)
+            elif df["low"][index] < ep_low:
+                ep_low = df["low"][index]
+                if not rising:
+                    ep = ep_low
+                    af = min(maximum, af + starting_af)
+            if rising:
+                if df["low"][index] < sar:
+                    rising = not rising
+                    sar = ep_high
+                    ep = ep_low = df["low"][index]
+                    af = 0
+            elif df["high"][index] > sar:
+                rising = not rising
+                sar = ep_low
+                ep = ep_high = df["high"][index]
+                af = 0
             df.loc[index, column_sar] = sar
-    
+
     df = df.astype(np.float64)
     return df
