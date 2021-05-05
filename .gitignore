@@ -358,3 +358,4 @@ trading.egg-info/
 test_data.json
 empty_coins.json
 coins_data/
+trading/display/tmp_config.json
