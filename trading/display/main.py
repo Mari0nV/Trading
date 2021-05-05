@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QComboBox,
     QDockWidget,
+    QInputDialog,
     QMainWindow,
     QMenu,
     QMenuBar,
@@ -61,47 +62,20 @@ class TabsWidget(QTabWidget):
         self.layout = QVBoxLayout(self)
         self.candles = {}
         self.ind_toolbar = ind_toolbar
+        self.nb_tabs = 0
 
         with open("trading/display/config.json", "r") as fp:
             config = json.load(fp)["config"]
 
         first = True
         for currency, indicators in config.items():
-            tab = QWidget()
-            tab.layout = QVBoxLayout(self)
-            tab.label = QLabel(currency)
-            fplt_widgets = create_fplt_widgets(self.window())
-            self.candles.setdefault(
-                currency, {
-                    "candles": get_candle_data( 
-                        currency,
-                        begin=begin,
-                        end=end,
-                        granularity=granularity
-                        )
-                    }
-                )
-            tab.layout.addWidget(tab.label)
-            tab.layout.addWidget(fplt_widgets[0].ax_widget, stretch=3)
-            self.window().axs = fplt_widgets
-            self.candles[currency]["axs"] = self.window().axs
-            plot_main_window(self.candles[currency])
-            tab.setLayout(tab.layout)
-            self.addTab(tab, currency)
-            self.ind_toolbar.set_graph_infos(
-                currency=currency,
-                candles=self.candles[currency],
-                widget=tab
-            )
+            tab = self.create_tab(currency, indicators)
             if first:
                 active_currency = (currency, tab)
                 first = False
-            for indicator in indicators:
-                params = indicator.split("-")
-                ind = params[0]
-                if len(params) > 1 and params[1].isnumeric():
-                    self.ind_toolbar.numbers[ind] = int(params[1])
-                getattr(self.ind_toolbar, f"show_{ind}")()
+
+        # Tab "+" to add new currency at runtime
+        self.create_add_tab()
 
         self.ind_toolbar.set_graph_infos(
                 currency=active_currency[0],
@@ -111,15 +85,69 @@ class TabsWidget(QTabWidget):
         self.setLayout(self.layout)
         self.currentChanged.connect(self.onChange)
 
-    def onChange(self, tab_index):
-        currency = self.currentWidget().label.text()
-        print("currency: ", currency)
+    def create_add_tab(self):
+        tab = QWidget()
+        tab.layout = QVBoxLayout(self)
+        tab.label = QLabel("+")
+        self.addTab(tab, "+")
+        self.nb_tabs += 1
+
+    def create_tab(self, currency, indicators, from_tab=None):
+        if not from_tab:
+            tab = QWidget()
+        else:
+            tab = from_tab
+        tab.layout = QVBoxLayout(self)
+        tab.label = QLabel(currency)
+        fplt_widgets = create_fplt_widgets(self.window())
+        self.candles.setdefault(
+            currency, {
+                "candles": get_candle_data( 
+                    currency,
+                    begin=begin,
+                    end=end,
+                    granularity=granularity
+                    )
+                }
+            )
+        tab.layout.addWidget(tab.label)
+        tab.layout.addWidget(fplt_widgets[0].ax_widget, stretch=3)
+        self.window().axs = fplt_widgets
+        self.candles[currency]["axs"] = self.window().axs
+        plot_main_window(self.candles[currency])
+        tab.setLayout(tab.layout)
+        if not from_tab:
+            self.addTab(tab, currency)
+            self.nb_tabs += 1
         self.ind_toolbar.set_graph_infos(
             currency=currency,
             candles=self.candles[currency],
-            widget=self.currentWidget()
+            widget=tab
         )
+        for indicator in indicators:
+            params = indicator.split("-")
+            ind = params[0]
+            if len(params) > 1 and params[1].isnumeric():
+                self.ind_toolbar.numbers[ind] = int(params[1])
+            getattr(self.ind_toolbar, f"show_{ind}")()
+        return tab
 
+    def onChange(self, tab_index):
+        if tab_index != self.nb_tabs - 1:
+            currency = self.currentWidget().label.text()
+            print("currency: ", currency)
+            self.ind_toolbar.set_graph_infos(
+                currency=currency,
+                candles=self.candles[currency],
+                widget=self.currentWidget()
+            )
+        else:
+            currency, ok = QInputDialog.getText(self, "currency input dialog", "Enter currency")
+            if ok:
+                print(currency)
+                self.create_add_tab()
+                self.create_tab(currency, indicators=[], from_tab=self.currentWidget())
+                self.setTabText(tab_index, currency)
 
 if __name__ == '__main__':
     set_plot_colors()
