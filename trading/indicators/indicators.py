@@ -255,3 +255,51 @@ def parabolic_sar(df, starting_af=0.02, maximum=0.2):
 
     df = df.astype(np.float64)
     return df
+
+
+def ichimoku(df, nb_lsb=52, nb_cl=9, nb_bl=26, nb_ahead=26):
+    """
+     Bullish Signals:
+        Price moves above cloud (trend)
+        Cloud turns from red to green (ebb-flow within trend)
+        Price Moves above the Base Line (momentum)
+        Conversion Line moves above Base Line (momentum)
+    Bearish Signals:
+        Price moves below cloud (trend)
+        Cloud turns from green to red (ebb-flow within trend)
+        Price Moves below Base Line (momentum)
+        Conversion Line moves below Base Line (momentum)
+    """
+    column_cl = "Ichimoku_ConversionLine"
+    column_bl = "Ichimoku_BaseLine"
+    column_lsa = "Ichimoku_LeadingSpanA"
+    column_lsb = "Ichimoku_LeadingSpanB"
+    column_ls = "Ichimoku_LaggingSpan"
+
+    if len(df) > nb_lsb:
+        for index in range(nb_lsb - 1, len(df)):
+            highest_high_cl = max([df["high"][i] for i in range(index - nb_cl + 1, index + 1)])
+            lowest_low_cl = min([df["low"][i] for i in range(index - nb_cl + 1, index + 1)])
+            cl = (highest_high_cl + lowest_low_cl) / 2
+
+            highest_high_bl = max([df["high"][i] for i in range(index - nb_bl + 1, index + 1)])
+            lowest_low_bl = min([df["low"][i] for i in range(index - nb_bl + 1, index + 1)])
+            bl = (highest_high_bl + lowest_low_bl) / 2
+
+            lsa = (cl + bl) / 2
+
+            highest_high_lsb = max([df["high"][i] for i in range(index - nb_lsb + 1, index + 1)])
+            lowest_low_lsb = min([df["low"][i] for i in range(index - nb_lsb + 1, index + 1)])
+            lsb = (highest_high_lsb + lowest_low_lsb) / 2
+            
+            ls = df["close"][index]
+
+            df.loc[index, column_cl] = cl
+            df.loc[index, column_bl] = bl
+            if index < len(df) - nb_ahead:
+                df.loc[index + nb_ahead, column_lsa] = lsa
+                df.loc[index + nb_ahead, column_lsb] = lsb
+            df.loc[index - nb_ahead, column_ls] = ls
+    
+    df = df.astype(np.float64)
+    return df

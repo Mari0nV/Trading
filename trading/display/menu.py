@@ -14,6 +14,7 @@ from PyQt5.QtCore import Qt
 
 from trading.indicators.indicators import (
     directional_movement,
+    ichimoku,
     mma,
     parabolic_sar,
     rsi
@@ -58,6 +59,7 @@ class IndicatorsToolBar(QToolBar):
         self.indicator_widget("ParabolicSar", self.show_parabolic)
         self.indicator_widget("RSI", self.show_rsi)
         self.indicator_widget("ADX", self.show_adx)
+        self.indicator_widget("Ichimoku", self.show_ichimoku)
 
     def add_label(self, text):
         label = QLabel()
@@ -126,6 +128,61 @@ class IndicatorsToolBar(QToolBar):
         fplt.plot(df["time"], df["ADX14"], ax=self.state.axs[self.state.ax_index], color="#304aea", legend=f"ADX")
         fplt.plot(df["time"], df["DI+14"], ax=self.state.axs[self.state.ax_index], color="#26A69A", legend=f"DI+")
         fplt.plot(df["time"], df["DI-14"], ax=self.state.axs[self.state.ax_index], color="#EF5350", legend=f"DI-")
-        # fplt.set_y_range(-1.4, +3.7, ax=self.axs[1])
         fplt.show(qt_exec=False)
         self.state.ax_index += 1
+    
+    @save
+    def show_ichimoku(self):
+        df = ichimoku(self.state.candles)
+
+        # we need to separate lsa and lsb columns into several plots to be able to fill between them
+        # with different colors (green if lsa > lsb and red otherwise)
+        fill_green = "#192727"
+        fill_red = "#2B1D27"
+        first_index = df["Ichimoku_LeadingSpanA"].first_valid_index()
+        columns = {
+            "time": [df["time"][first_index]],
+            "lsa": [df["Ichimoku_LeadingSpanA"][first_index]],
+            "lsb": [df["Ichimoku_LeadingSpanB"][first_index]],
+        }
+        green = df["Ichimoku_LeadingSpanA"][first_index] > df["Ichimoku_LeadingSpanB"][first_index]
+        for i in range(first_index + 1, len(df)):
+            columns["lsa"].append(df["Ichimoku_LeadingSpanA"][i])
+            columns["lsb"].append(df["Ichimoku_LeadingSpanB"][i])
+            columns["time"].append(df["time"][i])
+            if df["Ichimoku_LeadingSpanA"][i] > df["Ichimoku_LeadingSpanB"][i]:
+                if not green:
+                    plot_a = fplt.plot(columns["time"], columns["lsa"], ax=self.state.axs[0], color="#4BAB4F")
+                    plot_b = fplt.plot(columns["time"], columns["lsb"], ax=self.state.axs[0], color="#F25952")
+                    fplt.fill_between(plot_a, plot_b, color=fill_red)
+                    columns = {
+                        "time": [df["time"][i]],
+                        "lsa": [df["Ichimoku_LeadingSpanA"][i]],
+                        "lsb": [df["Ichimoku_LeadingSpanB"][i]],
+                    }
+            elif green:
+                    plot_a = fplt.plot(columns["time"], columns["lsa"], ax=self.state.axs[0], color="#4BAB4F")
+                    plot_b = fplt.plot(columns["time"], columns["lsb"], ax=self.state.axs[0], color="#F25952")
+                    fplt.fill_between(plot_a, plot_b, color=fill_green)
+                    columns = {
+                        "time": [df["time"][i]],
+                        "lsa": [df["Ichimoku_LeadingSpanA"][i]],
+                        "lsb": [df["Ichimoku_LeadingSpanB"][i]],
+                    }
+
+            green = df["Ichimoku_LeadingSpanA"][i] > df["Ichimoku_LeadingSpanB"][i]
+
+        # last plot for lsa and lsb
+        plot_a = fplt.plot(columns["time"], columns["lsa"], ax=self.state.axs[0], color="#4BAB4F", legend=f"Leading Span A (Senku Span A)")
+        plot_b = fplt.plot(columns["time"], columns["lsb"], ax=self.state.axs[0], color="#F25952", legend=f"Leading Span B (Senku Span B)")
+        if green:
+            fplt.fill_between(plot_a, plot_b, color=fill_green)
+        else:
+            fplt.fill_between(plot_a, plot_b, color=fill_red)
+
+        # plot the other ichimoku columns
+        fplt.plot(df["time"], df["Ichimoku_LaggingSpan"], ax=self.state.axs[0], color="#459915", legend=f"Lagging Span (Chikou Span)")
+        fplt.plot(df["time"], df["Ichimoku_BaseLine"], ax=self.state.axs[0], color="#991515", legend=f"Base Line (Kijun-sen)")
+        fplt.plot(df["time"], df["Ichimoku_ConversionLine"], ax=self.state.axs[0], color="#0495FD", legend=f"Conversion Line (Tenkan-sen)")
+
+        fplt.show(qt_exec=False)
