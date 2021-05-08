@@ -145,7 +145,7 @@ def test_that_rsi_is_computed():
 
 
 def test_directional_movement():
-    with open("data_adx.json", "r") as fd:
+    with open("tests/data_adx.json", "r") as fd:
         data = json.load(fd)["data"]
     
     values = [(data["low"][i], data["high"][i], data["close"][i]) for i in range(len(data["high"]))]
